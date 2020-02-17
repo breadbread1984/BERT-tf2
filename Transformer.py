@@ -171,7 +171,7 @@ def Transformer(vocab_size, num_layers = 2, d_model = 256, num_heads = 8, code_d
     # 1) inputs
     inputs = tf.keras.Input((None,));                                             # inputs.shape = (batch, input_length)
     dec_inputs = tf.keras.Input((None,));                                         # dec_inputs.shape = (batch, dec_input_length)
-    enc_padding_mask = tf.keras.layers.Lambda(create_padding_mask)(inputs);       # enc_padding_mask.shape = (batch, 1, 1, dec_input_length)
+    enc_padding_mask = tf.keras.layers.Lambda(create_padding_mask)(inputs);       # enc_padding_mask.shape = (batch, 1, 1(will be input_length), input_length)
     look_ahead_mask = tf.keras.layers.Lambda(create_look_ahead_mask)(dec_inputs); # look_ahead_mask.shape = (batch, 1, dec_input_length, input_length)
     dec_padding_mask = tf.keras.layers.Lambda(create_padding_mask)(inputs);       # dec_padding_mask.shape = (batch, 1, 1(will be dec_input length), input_length)
     # 2) generate code
