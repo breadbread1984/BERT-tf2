@@ -56,7 +56,7 @@ def BERT(vocab_size, num_layers = 12, embed_dim = 768, num_heads = 12, code_dim 
     next_sentence_prediction = tf.keras.layers.Lambda(lambda x: x[:, 0, :])(results);  # next_sentence_prediction.shape = (batch, embed_dim)
     next_sentence_prediction = tf.keras.layers.Dense(units = embed_dim, activation = tf.math.tanh)(next_sentence_prediction);
     next_sentence_prediction = tf.keras.layers.Dense(units = 2, activation = tf.keras.layers.Softmax())(next_sentence_prediction);
-    return tf.keras.Model(inputs = (token, segment, mask), outputs = results);
+    return tf.keras.Model(inputs = (token, segment, mask), outputs = (masked_lm, next_sentence_prediction));
   return tf.keras.Model(inputs = (token, segment, mask), outputs = results);
 
 if __name__ == "__main__":
