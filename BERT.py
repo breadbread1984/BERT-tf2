@@ -27,15 +27,7 @@ class EmbeddingSimilarity(tf.keras.layers.Layer):
     results = tf.keras.layers.Lambda(lambda x: tf.linalg.matmul(x[0], tf.expand_dims(x[1], axis = 0), transpose_b = True))([embedding, weights]); # results.shape = (batch, encode_length, vocab_size)
     results = tf.keras.layers.Lambda(lambda x: x[0] + x[1])([results,self.bias]);
     results = tf.keras.layers.Softmax()(results); # results.shape = (batch, encode_length, vocab_size)
-    return results;
-
-def Masked(tf.keras.layers.Layer):
-
-  def __init__(self, **kwargs):
-
-    super(Masked, self).__init__(**kwargs);
-
-  def build(self, input_shape):
+    return results;    
 
 def BERT(vocab_size, num_layers = 12, embed_dim = 768, num_heads = 12, code_dim = 3072, dropout_rate = 0.1, training = True):
 
@@ -53,16 +45,18 @@ def BERT(vocab_size, num_layers = 12, embed_dim = 768, num_heads = 12, code_dim 
   # 3) encoder
   results = tf.keras.layers.Dropout(rate = dropout_rate)(inputs);
   results = tf.keras.layers.LayerNormalization()(results);
-  mask = tf.keras.layers.Reshape((1,1,-1))(mask);
+  reshaped_mask = tf.keras.layers.Reshape((1,1,-1))(mask);
   for i in range(num_layers):
-    results = EncoderLayer(embed_dim, num_heads, code_dim, dropout_rate, tfa.layers.GELU())([results, mask]); # results.shape = (batch, encode_length, embed_dim)
+    results = EncoderLayer(embed_dim, num_heads, code_dim, dropout_rate, tfa.layers.GELU())([results, reshaped_mask]); # results.shape = (batch, encode_length, embed_dim)
   # 4) outputs
   if training:
-    results = tf.keras.layers.Dense(units = embed_dim, activation = tfa.layers.GELU())(results);
-    results = tf.keras.layers.LayerNormalization()(results);                                                  # results.shape = (batch, encode_length, embed_dim)
-    results = EmbeddingSimilarity()([results, embedding.embeddings]); # results.shape = (batch, encode_length, vocab_size)
-    
-    #TODO
+    masked_lm = tf.keras.layers.Dense(units = embed_dim, activation = tfa.layers.GELU())(results);
+    masked_lm = tf.keras.layers.LayerNormalization()(masked_lm);                      # masked_lm.shape = (batch, encode_length, embed_dim)
+    masked_lm = EmbeddingSimilarity()([masked_lm, embedding.embeddings]);             # masked_lm.shape = (batch, encode_length, vocab_size)
+    next_sentence_prediction = tf.keras.layers.Lambda(lambda x: x[:, 0, :])(results);  # next_sentence_prediction.shape = (batch, embed_dim)
+    next_sentence_prediction = tf.keras.layers.Dense(units = embed_dim, activation = tf.math.tanh)(next_sentence_prediction);
+    next_sentence_prediction = tf.keras.layers.Dense(units = 2, activation = tf.keras.layers.Softmax())(next_sentence_prediction);
+    return tf.keras.Model(inputs = (token, segment, mask), outputs = results);
   return tf.keras.Model(inputs = (token, segment, mask), outputs = results);
 
 if __name__ == "__main__":
