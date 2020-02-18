@@ -32,7 +32,7 @@ class EmbeddingSimilarity(tf.keras.layers.Layer):
 def BERT(vocab_size, num_layers = 12, embed_dim = 768, num_heads = 12, code_dim = 3072, dropout_rate = 0.1, training = True):
 
   # 1) inputs
-  # NOTE: mask array element has 1 when the input token is for control purpose
+  # NOTE: mask array element is 1 when the input token is for control purpose
   token = tf.keras.Input((None,), name = 'Token'); # token.shape = (batch, encode_length)
   segment = tf.keras.Input((None,), name = 'Segment'); # segment.shape = (batch, encode_length)
   mask = tf.keras.Input((None,), name = 'mask'); # mask.shape = (batch, encode_length)
@@ -64,3 +64,4 @@ if __name__ == "__main__":
   assert tf.executing_eagerly();
   bert = BERT(100);
   bert.save('bert.h5');
+  tf.keras.utils.plot_model(model = bert, to_file = 'bert.png', show_shapes = True, dpi = 64);

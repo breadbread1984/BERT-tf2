@@ -190,3 +190,4 @@ if __name__ == "__main__":
     assert tf.executing_eagerly();
     transformer = Transformer(100);
     transformer.save('transformer.h5');
+    tf.keras.utils.plot_model(model = transformer, to_file = 'transformer.png', show_shapes = True, dpi = 64);
