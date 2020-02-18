@@ -14,9 +14,9 @@ class EmbeddingSimilarity(tf.keras.layers.Layer):
 
     self.bias = self.add_weight(
       shape = (int(input_shape[1][0]),), # (vocab_size,)
-      initializer = tf.keras.initializers.zeros_initializer(),
-      regularizer = tf.keras.initializers.zeros_initializer(),
-      constraint = tf.keras.initializers.zeros_initializer()
+      initializer = tf.zeros_initializer(),
+      regularizer = tf.zeros_initializer(),
+      constraint = tf.zeros_initializer()
     );
 
   def call(self, inputs):
@@ -24,8 +24,8 @@ class EmbeddingSimilarity(tf.keras.layers.Layer):
     # embedding.shape = (batch, encode_length, embed_dim)
     # weights.shape = (vocab_size, embed_dim)
     embedding, weights = inputs;
-    results = tf.keras.layers.Lambda(lambda x: tf.linalg.matmul(x[0], tf.expand_dims(x[1], axis = 0), transpose_b = True))([embedding, weights]); # results.shape = (batch, encode_length, vocab_size)
-    results = tf.keras.layers.Lambda(lambda x: x[0] + x[1])([results,self.bias]);
+    results = tf.linalg.matmul(embedding, tf.expand_dims(weights, axis = 0), transpose_b = True); # results.shape = (batch, encode_length, vocab_size)
+    results = results + self.bias;
     results = tf.keras.layers.Softmax()(results); # results.shape = (batch, encode_length, vocab_size)
     return results;    
 
