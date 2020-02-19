@@ -58,7 +58,7 @@ class BERTTrainer(tf.keras.Model):
     self.dense1 = tf.keras.layers.Dense(units = embed_dim, activation = tfa.layers.GELU());
     self.layernorm = tf.keras.layers.LayerNormalization();
     self.embedsim = EmbeddingSimilarity();
-    self.lamdafunc = tf.keras.layers.Lambda(lambda x: x[:, 0, :]);
+    self.lambdafunc = tf.keras.layers.Lambda(lambda x: x[:, 0, :]);
     self.dense2 = tf.keras.layers.Dense(units = embed_dim, activation = tf.math.tanh);
     self.dense3 = tf.keras.layers.Dense(units = 2, activation = tf.keras.layers.Softmax());
 
