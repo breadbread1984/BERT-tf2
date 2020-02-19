@@ -77,7 +77,7 @@ def EncoderLayer(d_model, num_heads, code_dim, dropout_rate, activation = tf.ker
     tf.debugging.Assert(tf.equal(d_model % num_heads,0),[d_model, num_heads]);
     # 1) inputs
     inputs = tf.keras.Input((None, d_model));   # inputs.shape = (batch, encode_length, dimension)
-    mask = tf.keras.Input((1, None, None));        # mask.shape = (batch, 1, 1(will be encode_length), encode_length)
+    mask = tf.keras.Input((1, 1, None));        # mask.shape = (batch, 1, 1(will be encode_length), encode_length)
     # 2) multi-head attention resblock
     attended = MultiHeadAttention(d_model, num_heads)([inputs, inputs, inputs, mask]);
     attended = tf.keras.layers.Dropout(rate = dropout_rate)(attended);
@@ -97,7 +97,7 @@ def Encoder(vocab_size, num_layers, d_model, num_heads, code_dim, dropout_rate, 
     tf.debugging.Assert(tf.equal(d_model % num_heads,0),[d_model, num_heads]);
     # 1) inputs
     inputs = tf.keras.Input((None,));        # inputs.shape = (batch, encode_length)
-    mask = tf.keras.Input((1, None, None));  # mask.shape = (batch, 1, 1(will be encode_length), encode_length)
+    mask = tf.keras.Input((1, 1, None));  # mask.shape = (batch, 1, 1(will be encode_length), encode_length)
     # 2) token to positional embedding
     embeddings = tf.keras.layers.Embedding(vocab_size, d_model)(inputs);
     embeddings = tf.keras.layers.Lambda(lambda x, d_model: tf.math.sqrt(tf.cast(d_model, dtype = tf.float32)) * x, arguments = {'d_model': d_model})(embeddings);
@@ -116,7 +116,7 @@ def DecoderLayer(d_model, num_heads, code_dim, dropout_rate, activation = tf.ker
     inputs = tf.keras.Input((None, d_model));          # inputs.shape = (batch, decode_length, dimension)
     code = tf.keras.Input((None, d_model));            # code.shape = (batch, encode_length, dimension)
     look_ahead_mask = tf.keras.Input((1, None, None)); # look_ahead_mask.shape = (batch, 1, decode_length, encode_length)
-    padding_mask = tf.keras.Input((1, None, None));       # padding_mask.shape = (batch, 1, 1(will be decode_length), encode_length)
+    padding_mask = tf.keras.Input((1, 1, None));       # padding_mask.shape = (batch, 1, 1(will be decode_length), encode_length)
     # 2) multi-head attention resblock
     attention1 = MultiHeadAttention(d_model, num_heads)([inputs, inputs, inputs, look_ahead_mask]);
     attention1_inputs = tf.keras.layers.Add()([attention1, inputs]);
@@ -143,7 +143,7 @@ def Decoder(vocab_size, num_layers, d_model, num_heads, code_dim, dropout_rate, 
     inputs = tf.keras.Input((None,));                  # inputs.shape = (batch, decode_length)
     code = tf.keras.Input((None, d_model));            # code.shape = (batch, encode_length, dimension)
     look_ahead_mask = tf.keras.Input((1, None, None)); # look_ahead_mask.shape = (batch, 1, decode_length, encode_length)
-    padding_mask = tf.keras.Input((1, None, None));       # padding_mask.shape = (batch, 1, 1(will be decode_length), encode_length)
+    padding_mask = tf.keras.Input((1, 1, None));       # padding_mask.shape = (batch, 1, 1(will be decode_length), encode_length)
     # 2) token to positional embedding
     embeddings = tf.keras.layers.Embedding(vocab_size, d_model)(inputs);
     embeddings = tf.keras.layers.Lambda(lambda x, d_model: tf.math.sqrt(tf.cast(d_model, dtype = tf.float32)) * x, arguments = {'d_model': d_model})(embeddings);

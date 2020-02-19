@@ -34,9 +34,7 @@ class EmbeddingSimilarity(tf.keras.layers.Layer):
 
     self.bias = self.add_weight(
       shape = (int(input_shape[1][0]),), # (vocab_size,)
-      initializer = tf.zeros_initializer(),
-      regularizer = tf.zeros_initializer(),
-      constraint = tf.zeros_initializer()
+      initializer = tf.zeros_initializer()
     );
 
   def call(self, inputs):
@@ -74,6 +72,19 @@ class BERTTrainer(tf.keras.Model):
     next_sentence_prediction = self.dense3(next_sentence_prediction); # next_sentence_prediction.shape = (batch, 2)
     return masked_lm, next_sentence_prediction;
 
+def BERTClassifier(vocab_size, num_layers = 12, embed_dim = 768, num_heads = 12, code_dim = 3072, dropout_rate = 0.1):
+
+  token = tf.keras.Input((None,), name = 'Token'); # token.shape = (batch, encode_length)
+  segment = tf.keras.Input((None,), name = 'Segment'); # segment.shape = (batch, encode_length)
+  mask = tf.keras.Input((None,), name = 'mask'); # mask.shape = (batch, encode_length)
+  results = BERT(vocab_size, num_layers, embed_dim, num_heads, code_dim, dropout_rate)([token, segment, mask]);
+  results = tf.keras.layers.Lambda(lambda x: x[:,0,:])(results);
+  results = tf.keras.layers.Dropout(rate = 0.5)(results);
+  results = tf.keras.layers.Dense(units = embed_dim, activation = tf.math.tanh)(results);
+  results = tf.keras.layers.Dropout(rate = 0.5)(results);
+  results = tf.keras.layers.Dense(units = 2, activation = tf.keras.layers.Softmax())(results);
+  return tf.keras.Model(inputs = (token, segment, mask), outputs = results);
+
 if __name__ == "__main__":
 
   assert tf.executing_eagerly();
@@ -81,4 +92,6 @@ if __name__ == "__main__":
   bert.save('bert.h5');
   bert_trainer = BERTTrainer(100);
   bert_trainer.save_weights('bert_trainer.h5');
+  bert_classifier = BERTClassifier(100);
+  bert_classifier.save('bert_classifier.h5');
   tf.keras.utils.plot_model(model = bert, to_file = 'bert.png', show_shapes = True, dpi = 64);
