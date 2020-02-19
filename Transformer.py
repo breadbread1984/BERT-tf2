@@ -88,7 +88,6 @@ def EncoderLayer(d_model, num_heads, code_dim, dropout_rate, activation = tf.ker
     outputs = tf.keras.layers.Dense(units = d_model)(outputs);
     outputs = tf.keras.layers.Dropout(rate = dropout_rate)(outputs);
     attended_outputs = tf.keras.layers.Add()([attended, outputs]);                  # attended_outputs.shape = (batch, encode_length, dimension)
-    # 4) outputs
     outputs = tf.keras.layers.LayerNormalization(epsilon = 1e-6)(attended_outputs); # outputs.shape = (batch, encode_length, dimension)
     return tf.keras.Model(inputs = (inputs, mask), outputs = outputs);
 
@@ -132,8 +131,8 @@ def DecoderLayer(d_model, num_heads, code_dim, dropout_rate, activation = tf.ker
     outputs = tf.keras.layers.Dense(units = d_model)(outputs);
     outputs = tf.keras.layers.Dropout(rate = dropout_rate)(outputs);
     outputs_attention2 = tf.keras.layers.Add()([outputs, attention2]);                      # outputs_attention2.shape = (batch, decode_length, dimension)
-    # 5) outputs.shape = (batch, seq_length, d_model)
     outputs = tf.keras.layers.LayerNormalization(epsilon = 1e-6)(outputs_attention2);       # outputs.shape = (batch, decode_length, dimension)
+    # 5) outputs.shape = (batch, seq_length, d_model)
     return tf.keras.Model(inputs = (inputs, code, look_ahead_mask, padding_mask), outputs = outputs);
 
 def Decoder(vocab_size, num_layers, d_model, num_heads, code_dim, dropout_rate, activation = tf.keras.layers.ReLU()):
