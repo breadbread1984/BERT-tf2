@@ -76,14 +76,14 @@ def BERTClassifier(vocab_size, num_layers = 12, embed_dim = 768, num_heads = 12,
 
   token = tf.keras.Input((None,), name = 'Token'); # token.shape = (batch, encode_length)
   segment = tf.keras.Input((None,), name = 'Segment'); # segment.shape = (batch, encode_length)
-  mask = tf.keras.Input((None,), name = 'mask'); # mask.shape = (batch, encode_length)
+  mask = tf.keras.layers.Lambda(lambda x: tf.cast(tf.equal(x, 0), dtype = tf.float32))(token); # mask padding token
   results = BERT(vocab_size, num_layers, embed_dim, num_heads, code_dim, dropout_rate)([token, segment, mask]);
   results = tf.keras.layers.Lambda(lambda x: x[:,0,:])(results);
   results = tf.keras.layers.Dropout(rate = 0.5)(results);
   results = tf.keras.layers.Dense(units = embed_dim, activation = tf.math.tanh)(results);
   results = tf.keras.layers.Dropout(rate = 0.5)(results);
   results = tf.keras.layers.Dense(units = 2, activation = tf.keras.layers.Softmax())(results);
-  return tf.keras.Model(inputs = (token, segment, mask), outputs = results);
+  return tf.keras.Model(inputs = (token, segment), outputs = results);
 
 if __name__ == "__main__":
 
