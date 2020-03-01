@@ -33,7 +33,8 @@ def preprocess(s1, s2, max_seq_len = 128):
     segment_ids.append(1);
   tokens.append('[SEP]');
   segment_ids.append(1);
-  input_ids = self.tokenizer.convert_tokens_to_ids(tokens);
+  input_ids = tokenizer.convert_tokens_to_ids(tokens);
+  # NOTE: my implementation uses mask = 1 to ignore padding token
   input_mask = [0,] * len(input_ids);
   while len(input_ids) < max_seq_len:
     input_ids.append(0);
@@ -56,18 +57,71 @@ def create_AFQMC(max_seq_len = 128):
   zip_file.extractall(join('tmp','afqmc_public'));
   zip_file.close();
   # 2) create dateset
-  # trainset
   if False == exists('datasets'): mkdir('datasets');
   if False == exists(join('datasets', 'afqmc_public')): mkdir(join('datasets', 'afqmc_public'));
-  writer = tf.io.TFRecordWrite(join('datasets', 'afqmc_public','trainset.tfrecord'));
-  f = open('tmp/afqmc_public/train.json', 'r');
+  # trainset
+  writer = tf.io.TFRecordWriter(join('datasets', 'afqmc_public','trainset.tfrecord'));
+  f = open(join('tmp','afqmc_public','train.json'), 'r');
   lines = f.readlines();
   for line in lines:
     sample = json.loads(line);
     s1 = sample['sentence1'];
     s2 = sample['sentence2'];
     label = int(sample['label']);
+    input_ids, input_mask, segment_ids = preprocess(s1, s2, max_seq_len);
+    tf_example = tf.train.Example(features = tf.train.Features(
+      feature = {
+        "input_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(input_ids))),
+        "input_mask": tf.train.Feature(int64_list = tf.train.Int64List(value = list(input_mask))),
+        "segment_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(segment_ids))),
+        "label_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = [label,]))
+      }
+    ));
+    writer.write(tf_example.SerializeToString());
   f.close();
+  writer.close();
+  # validateset
+  writer = tf.io.TFRecordWriter(join('datasets', 'afqmc_public', 'validateset.tfrecord'));
+  f = open(join('tmp','afqmc_public','dev.json'), 'r');
+  lines = f.readlines();
+  for line in lines:
+    sample = json.loads(line);
+    s1 = sample['sentence1'];
+    s2 = sample['sentence2'];
+    label = int(sample['label']);
+    input_ids, input_mask, segment_ids = preprocess(s1, s2, max_seq_len);
+    tf_example = tf.train.Example(features = tf.train.Features(
+      feature = {
+        "input_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(input_ids))),
+        "input_mask": tf.train.Feature(int64_list = tf.train.Int64List(value = list(input_mask))),
+        "segment_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(segment_ids))),
+        "label_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = [label,]))
+      }
+    ));
+    writer.write(tf_example.SerializeToString());
+  f.close();
+  writer.close();
+  # testset
+  writer = tf.io.TFRecordWriter(join('datasets', 'afqmc_public', 'testset.tfrecord'));
+  f = open(join('tmp','afqmc_public','test.json'), 'r');
+  lines = f.readlines();
+  for line in lines:
+    sample = json.loads(line);
+    s1 = sample['sentence1'];
+    s2 = sample['sentence2'];
+    id = int(sample['id']);
+    input_ids, input_mask, segment_ids = preprocess(s1, s2, max_seq_len);
+    tf_example = tf.train.Example(features = tf.train.Features(
+      feature = {
+        "input_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(input_ids))),
+        "input_mask": tf.train.Feature(int64_list = tf.train.Int64List(value = list(input_mask))),
+        "segment_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(segment_ids))),
+        "id": tf.train.Feature(int64_list = tf.train.Int64List(value = [id,]))
+      }
+    ));
+    writer.write(tf_example.SerializeToString());
+  f.close();
+  writer.close();
 
 def create_TNEWS(max_seq_len = 128):
   pass;
