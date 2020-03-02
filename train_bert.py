@@ -27,7 +27,7 @@ def train_AFQMC():
   while True:
     (input_ids, segment_ids), label_ids = next(trainset);
     with tf.GradientTape() as tape:
-      results = bert_classifier(input_ids, segment_ids);
+      results = bert_classifier([input_ids, segment_ids]);
       loss = tf.keras.losses.SparseCategoricalCrossentrypy(from_logits = False)(label_ids, results);
     avg_loss.update_state(loss);
     # write_log
