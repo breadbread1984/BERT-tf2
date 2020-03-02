@@ -45,6 +45,22 @@ def preprocess(s1, s2, max_seq_len = 128):
   assert len(segment_ids) == max_seq_len;
   return input_ids, input_mask, segment_ids;
 
+def parse_function_generator(max_seq_len = 128):
+  def parse_function(serialized_example):
+    feature = tf.io.parse_single_example(
+      serialized_example,
+      features = {
+        'input_ids': tf.io.FixedLenFeature((max_seq_len), dtype = tf.int64),
+        'input_mask': tf.io.FixedLenFeature((max_seq_len), dtype = tf.int64),
+        'segment_ids': tf.io.FixedLenFeature((max_seq_len), dtype = tf.int64),
+        'label_ids': tf.io.FixedLenFeature((), dtype = tf.int64)
+      }
+    );
+    for name in list(feature.keys()):
+      feature[name] = tf.cast(feature[name], dtype = tf.int32);
+    return (feature['input_ids'], feature['segment_ids']), feature['label_ids'];
+  return input_function;
+
 def create_AFQMC(max_seq_len = 128):
   # 1) download and extract dataset
   if False == exists('tmp'): mkdir('tmp');
