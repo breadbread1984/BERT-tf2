@@ -59,7 +59,7 @@ def parse_function_generator(max_seq_len = 128):
     for name in list(feature.keys()):
       feature[name] = tf.cast(feature[name], dtype = tf.int32);
     return (feature['input_ids'], feature['segment_ids']), feature['label_ids'];
-  return input_function;
+  return parse_function;
 
 def create_AFQMC(max_seq_len = 128):
   # 1) download and extract dataset
