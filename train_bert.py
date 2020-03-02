@@ -20,7 +20,7 @@ def train_AFQMC():
   validateset = iter(tf.data.TFRecordDataset(join('datasets', 'afqmc_public','trainset.tfrecord')).map(parse_function_generator(max_seq_len)).repeat().batch(batch_size).shuffle(batch_size));
   # restore from existing checkpoint
   if False == exists('checkpoints'): mkdir('checkpoints');
-  checkpoint = tf.train.Checkpoint(model = bert_classifer, optimizer = optimizer);
+  checkpoint = tf.train.Checkpoint(model = bert_classifier, optimizer = optimizer);
   checkpoint.restore(tf.train.latest_checkpoint('checkpoint'));
   # create log
   avg_loss = tf.keras.metrics.Mean(name = 'loss', dtype = tf.float32);
