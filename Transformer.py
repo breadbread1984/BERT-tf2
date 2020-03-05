@@ -168,7 +168,8 @@ def Transformer(vocab_size, num_layers = 2, d_model = 256, num_heads = 8, code_d
         seq_len = tf.shape(x)[1]; # input_length
         # set upper triangular zero
         look_ahead_mask = 1 - tf.linalg.band_part(tf.ones((seq_len, seq_len)), -1, 0);
-        padding_mask = create_padding_mask(x);
+        padding_mask = tf.cast(tf.math.equal(x, 0), tf.float32);
+        padding_mask = tf.expand_dims(tf.expand_dims(padding_mask, 1), 1);
         return tf.maximum(look_ahead_mask, padding_mask); # union the mask
 
     # 1) inputs
