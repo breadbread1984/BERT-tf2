@@ -11,7 +11,7 @@ from tokenization import FullTokenizer;
 
 tokenizer = FullTokenizer(vocab_file = join("bert_chinese", "vocab.txt"), do_lower_case = False);
 
-def preprocess(s1, s2, max_seq_len = 128):
+def preprocess(s1, s2 = '', max_seq_len = 128):
   tokens1 = tokenizer.tokenize(s1);
   tokens2 = tokenizer.tokenize(s2);
   while True:
@@ -140,7 +140,80 @@ def create_AFQMC(max_seq_len = 128):
   writer.close();
 
 def create_TNEWS(max_seq_len = 128):
-  pass;
+  labels = {'100': 0, '101': 1, '102': 2, '103': 3, '104': 4, '106': 5, '107': 6, '108': 7, '109': 8, '110': 9, '112': 10, '113': 11, '114': 12, '115': 13, '116': 14};
+  # 1) download and extract dataset
+  if False == exists('tmp'): mkdir('tmp');
+  if False == exists(join('tmp','tnews_public.zip')):
+    filename = wget.download('https://storage.googleapis.com/cluebenchmark/tasks/tnews_public.zip', out = 'tmp');
+  else:
+    filename = join('tmp','tnews_public.zip');
+  zip_file = zipfile.ZipFile(filename, 'r');
+  if False == exists(join('tmp','tnews_public')): mkdir(join('tmp','tnews_public'));
+  zip_file.extractall(join('tmp','tnews_public'));
+  zip_file.close();
+  # 2) create dataset
+  if False == exists('datasets'): mkdir('datasets');
+  if False == exists(join('datasets', 'tnews_public')): mkdir(join('datasets', 'tnews_public'));
+  # trainset
+  writer = tf.io.TFRecordWriter(join('datasets', 'tnews_public', 'trainset.tfrecord'));
+  f = open(join('tmp','tnews_public','train.json'), 'r');
+  lines = f.readlines();
+  for line in lines:
+    sample = json.loads(line);
+    s = sample['sentence'];
+    label = labels[sample['label']];
+    input_ids, input_mask, segment_ids = preprocess(s, '', max_seq_len);
+    tf_example = tf.train.Example(features = tf.train.Features(
+      feature = {
+        "input_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(input_ids))),
+        "input_mask": tf.train.Feature(int64_list = tf.train.Int64List(value = list(input_mask))),
+        "segment_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(segment_ids))),
+        "label_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = [label,]))
+      }
+    ));
+    writer.write(tf_example.SerializeToString());
+  f.close();
+  writer.close();
+  # validateset
+  writer = tf.io.TFRecordWriter(join('datasets', 'tnews_public', 'validateset.tfrecord'));
+  f = open(join('tmp','tnews_public','dev.json'), 'r');
+  lines = f.readlines();
+  for line in lines:
+    sample = json.loads(line);
+    s = sample['sentence'];
+    label = labels[sample['label']];
+    input_ids, input_mask, segment_ids = preprocess(s, '', max_seq_len);
+    tf_example = tf.train.Example(features = tf.train.Features(
+      feature = {
+        "input_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(input_ids))),
+        "input_mask": tf.train.Feature(int64_list = tf.train.Int64List(value = list(input_mask))),
+        "segment_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(segment_ids))),
+        "label_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = [label,]))
+      }
+    ));
+    writer.write(tf_example.SerializeToString());
+  f.close();
+  writer.close();
+  # testset
+  writer = tf.io.TFRecordWriter(join('datasets', 'tnews_public', 'testset.tfrecord'));
+  f = open(join('tmp','tnews_public','test.json'), 'r');
+  lines = f.readlines();
+  for line in lines:
+    sample = json.loads(line);
+    s = sample['sentence'];
+    id = sample['id'];
+    input_ids, input_mask, segment_ids = preprocess(s, '', max_seq_len);
+    tf_example = tf.train.Example(features = tf.train.Features(
+      feature = {
+        "input_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(input_ids))),
+        "input_mask": tf.train.Feature(int64_list = tf.train.Int64List(value = list(input_mask))),
+        "segment_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(segment_ids))),
+        "id": tf.train.Feature(int64_list = tf.train.Int64List(value = [id,]))
+      }
+    ));
+    writer.write(tf_example.SerializeToString());
+  f.close();
+  writer.close();
 
 def create_IFLYTEK(max_seq_len = 128):
   pass;
