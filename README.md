@@ -13,3 +13,7 @@ python3 create_dataset.py <dataset name>
 dataset should be one among 'AFQMC','TNEWS','IFLYTEK','CMNLI','WSCWinograd','CSL','CMRC','DRCD','CHID','C3' and 'CLUE'.
 
 ## how to train bert
+train on dataset with command
+
+```bash
+python3 train_bert.py <dataset name>
