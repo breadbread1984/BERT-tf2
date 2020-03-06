@@ -1,7 +1,7 @@
 # BERT-tf2
 Thie project implements BERT with tensorflow 2
 
-NOTE: the project adopts GELU activation from tf-addons. tf-addons only support the latest tensorflow stable version. don't use nightly build of tensorflow!!!
+**NOTE**: the project adopts GELU activation from tf-addons. tf-addons **only** support the latest tensorflow stable version. don't use nightly build of tensorflow!!!
 
 ## how to download and create dataset
 download and create datasets with command
