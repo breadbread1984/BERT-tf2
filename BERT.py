@@ -21,7 +21,7 @@ def BERT(vocab_size, num_layers = 12, embed_dim = 768, num_heads = 12, code_dim 
   results = tf.keras.layers.LayerNormalization()(results);
   reshaped_mask = tf.keras.layers.Reshape((1,1,-1))(mask);
   for i in range(num_layers):
-    results = EncoderLayer(embed_dim, num_heads, code_dim, dropout_rate, tfa.layers.GELU())([results, reshaped_mask]); # results.shape = (batch, encode_length, embed_dim)
+    results = EncoderLayer(embed_dim, num_heads, code_dim, dropout_rate, 'gelu')([results, reshaped_mask]); # results.shape = (batch, encode_length, embed_dim)
   return tf.keras.Model(inputs = (token, segment, mask), outputs = results);
 
 class EmbeddingSimilarity(tf.keras.layers.Layer):

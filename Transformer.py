@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import tensorflow as tf;
+import tensorflow_addons as tfa;
 
 def Attention(d_model, num_heads):
 
@@ -71,8 +72,9 @@ def PositionalEncoding(d_model):
     results = tf.keras.layers.Add()([inputs, pos_encoding]);                                                                                   # results.shape = (batch, length, dimension)
     return tf.keras.Model(inputs = inputs, outputs = results);
 
-def EncoderLayer(d_model, num_heads, code_dim, dropout_rate, activation = tf.keras.layers.ReLU()):
+def EncoderLayer(d_model, num_heads, code_dim, dropout_rate, activation = 'relu'):
 
+    assert activation in ['relu', 'gelu'];
     # d_model must be divisible by num_heads.
     tf.debugging.Assert(tf.equal(d_model % num_heads,0),[d_model, num_heads]);
     # 1) inputs
@@ -84,15 +86,20 @@ def EncoderLayer(d_model, num_heads, code_dim, dropout_rate, activation = tf.ker
     inputs_attended = tf.keras.layers.Add()([inputs, attended]);
     attended = tf.keras.layers.LayerNormalization(epsilon = 1e-6)(inputs_attended); # attended.shape = (batch, encode_length, dimension)
     # 3) feed forward network resblock
-    outputs = tf.keras.layers.Dense(units = code_dim, activation = activation)(attended);
+    outputs = tf.keras.layers.Dense(units = code_dim)(attended);
+    if activation == 'gelu':
+      outputs = tfa.layers.GELU()(outputs);
+    else:
+      outputs = tf.keras.layers.ReLU()(outputs);
     outputs = tf.keras.layers.Dense(units = d_model)(outputs);
     outputs = tf.keras.layers.Dropout(rate = dropout_rate)(outputs);
     attended_outputs = tf.keras.layers.Add()([attended, outputs]);                  # attended_outputs.shape = (batch, encode_length, dimension)
     outputs = tf.keras.layers.LayerNormalization(epsilon = 1e-6)(attended_outputs); # outputs.shape = (batch, encode_length, dimension)
     return tf.keras.Model(inputs = (inputs, mask), outputs = outputs);
 
-def Encoder(vocab_size, num_layers, d_model, num_heads, code_dim, dropout_rate, activation = tf.keras.layers.ReLU()):
+def Encoder(vocab_size, num_layers, d_model, num_heads, code_dim, dropout_rate, activation = "relu"):
 
+    assert activation in ['relu', 'gelu'];
     # d_model must be divisible by num_heads.
     tf.debugging.Assert(tf.equal(d_model % num_heads,0),[d_model, num_heads]);
     # 1) inputs
@@ -108,8 +115,9 @@ def Encoder(vocab_size, num_layers, d_model, num_heads, code_dim, dropout_rate, 
         outputs = EncoderLayer(d_model, num_heads, code_dim, dropout_rate, activation)([outputs, mask]); # outputs.shape = (batch, encode_length, dimension)
     return tf.keras.Model(inputs = (inputs, mask), outputs = outputs);
 
-def DecoderLayer(d_model, num_heads, code_dim, dropout_rate, activation = tf.keras.layers.ReLU()):
+def DecoderLayer(d_model, num_heads, code_dim, dropout_rate, activation = "relu"):
     
+    assert activation in ['relu', 'gelu'];
     # d_model must be divisible by num_heads.
     tf.debugging.Assert(tf.equal(d_model % num_heads,0),[d_model, num_heads]);
     # 1) inputs
@@ -127,7 +135,11 @@ def DecoderLayer(d_model, num_heads, code_dim, dropout_rate, activation = tf.ker
     attention2_attention1 = tf.keras.layers.Add()([attention2, attention1]);
     attention2 = tf.keras.layers.LayerNormalization(epsilon = 1e-6)(attention2_attention1); # attention2.shape = (batch, decode_length, dimension)
     # 4) feed ward network
-    outputs = tf.keras.layers.Dense(units = code_dim, activation = activation)(attention2);
+    outputs = tf.keras.layers.Dense(units = code_dim)(attention2);
+    if activation == 'gelu':
+      outputs = tfa.layers.GELU()(outputs);
+    else:
+      outputs = tf.keras.layers.ReLU()(outputs);
     outputs = tf.keras.layers.Dense(units = d_model)(outputs);
     outputs = tf.keras.layers.Dropout(rate = dropout_rate)(outputs);
     outputs_attention2 = tf.keras.layers.Add()([outputs, attention2]);                      # outputs_attention2.shape = (batch, decode_length, dimension)
@@ -135,8 +147,9 @@ def DecoderLayer(d_model, num_heads, code_dim, dropout_rate, activation = tf.ker
     # 5) outputs.shape = (batch, seq_length, d_model)
     return tf.keras.Model(inputs = (inputs, code, look_ahead_mask, padding_mask), outputs = outputs);
 
-def Decoder(vocab_size, num_layers, d_model, num_heads, code_dim, dropout_rate, activation = tf.keras.layers.ReLU()):
+def Decoder(vocab_size, num_layers, d_model, num_heads, code_dim, dropout_rate, activation = 'relu'):
     
+    assert activation in ['relu', 'gelu'];
     # d_model must be divisible by num_heads.
     tf.debugging.Assert(tf.equal(d_model % num_heads,0),[d_model, num_heads]);
     # 1) inputs
@@ -154,8 +167,9 @@ def Decoder(vocab_size, num_layers, d_model, num_heads, code_dim, dropout_rate, 
         outputs = DecoderLayer(d_model, num_heads, code_dim, dropout_rate, activation)([outputs, code, look_ahead_mask, padding_mask]); # outputs.shape = (batch, decode_length, dimension)
     return tf.keras.Model(inputs = (inputs, code, look_ahead_mask, padding_mask), outputs = outputs);
 
-def Transformer(vocab_size, num_layers = 2, d_model = 256, num_heads = 8, code_dim = 512, dropout_rate = 0.1, activation = tf.keras.layers.ReLU()):
+def Transformer(vocab_size, num_layers = 2, d_model = 256, num_heads = 8, code_dim = 512, dropout_rate = 0.1, activation = 'relu'):
     
+    assert activation in ['relu', 'gelu'];
     def create_padding_mask(x):
         # padding mask: every token mustn't related to padding token
         mask = tf.cast(tf.math.equal(x, 0), tf.float32);
@@ -168,7 +182,8 @@ def Transformer(vocab_size, num_layers = 2, d_model = 256, num_heads = 8, code_d
         seq_len = tf.shape(x)[1]; # input_length
         # set upper triangular zero
         look_ahead_mask = 1 - tf.linalg.band_part(tf.ones((seq_len, seq_len)), -1, 0);
-        padding_mask = create_padding_mask(x);
+        padding_mask = tf.cast(tf.math.equal(x, 0), tf.float32);
+        padding_mask = tf.expand_dims(tf.expand_dims(padding_mask, 1), 1);
         return tf.maximum(look_ahead_mask, padding_mask); # union the mask
 
     # 1) inputs
