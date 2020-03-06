@@ -15,12 +15,12 @@ def train_AFQMC():
   batch_size = 64;
   trainset_size = 34334;
   bert_classifier = BERTClassifier(len(tokenizer.vocab));
-  bert_classifier.compile(optimizer = tf.keras.optimizers.Adam(2e-5), loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits = True), metrics = [tf.keras.metrics.SparseCategoricalAccuracy(name = 'accuracy')]);
+  bert_classifier.compile(optimizer = tf.keras.optimizers.Adam(2e-2), loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits = True), metrics = [tf.keras.metrics.SparseCategoricalAccuracy(name = 'accuracy')]);
   trainset = tf.data.TFRecordDataset(join('datasets', 'afqmc_public','trainset.tfrecord')).map(parse_function_generator(max_seq_len)).repeat().batch(batch_size).shuffle(batch_size);
   validateset = tf.data.TFRecordDataset(join('datasets', 'afqmc_public','trainset.tfrecord')).map(parse_function_generator(max_seq_len)).repeat().batch(batch_size).shuffle(batch_size);
-  bert_classifier.fit(trainset, validation_data = validateset, validation_steps = 1, epochs = 10, steps_per_epoch = ceil(trainset_size / batch_size));
+  bert_classifier.fit(trainset, validation_data = validateset, validation_steps = 1, epochs = 100, steps_per_epoch = ceil(trainset_size / batch_size));
   if False == exists('models'): mkdir('models');
-  bert_classifer.save(join('models', 'afqmc.h5'));
+  bert_classifier.save(join('models', 'afqmc.h5'));
 
 def train_TNEWS():
 
@@ -32,7 +32,7 @@ def train_TNEWS():
   validateset = tf.data.TFRecordDataset(join('datasets', 'tnews_public','trainset.tfrecord')).map(parse_function_generator(max_seq_len)).repeat().batch(batch_size).shuffle(batch_size);
   bert_classifier.fit(trainset, validation_data = validateset, validation_steps = 1, epochs = 10, steps_per_epoch = ceil(trainset_size / batch_size));
   if False == exists('models'): mkdir('models');
-  bert_classifer.save(join('models', 'tnews.h5'));  
+  bert_classifier.save(join('models', 'tnews.h5'));  
 
 def train_IFLYTEK():
   pass;
