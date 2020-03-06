@@ -17,7 +17,7 @@ def train_AFQMC():
   bert_classifier.compile(optimizer = tf.keras.optimizers.Adam(2e-5), loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits = True), metrics = [tf.keras.metrics.SparseCategoricalAccuracy(name = 'accuracy')]);
   trainset = tf.data.TFRecordDataset(join('datasets', 'afqmc_public','trainset.tfrecord')).map(parse_function_generator(max_seq_len)).repeat().batch(batch_size).shuffle(batch_size);
   validateset = tf.data.TFRecordDataset(join('datasets', 'afqmc_public','trainset.tfrecord')).map(parse_function_generator(max_seq_len)).repeat().batch(batch_size).shuffle(batch_size);
-  bert_classifier.fit(trainset, validation_data = validateset, epoches = 10, steps_per_epoch = ceil(trainset_size / batch_size));
+  bert_classifier.fit(trainset, validation_data = validateset, validation_steps = 1, epochs = 10, steps_per_epoch = ceil(trainset_size / batch_size));
   if False == exists('models'): mkdir('models');
   bert_classifer.save(join('models', 'bert_classifier.h5'));
 
