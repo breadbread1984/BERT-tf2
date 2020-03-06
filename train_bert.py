@@ -11,7 +11,7 @@ max_seq_len = 128
 
 def train_AFQMC():
 
-  batch_size = 8;
+  batch_size = 256;
   trainset_size = 34334;
   bert_classifier = BERTClassifier(len(tokenizer.vocab));
   bert_classifier.compile(optimizer = tf.keras.optimizers.Adam(2e-5), loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits = True), metrics = [tf.keras.metrics.SparseCategoricalAccuracy(name = 'accuracy')]);
